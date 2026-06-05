@@ -4,6 +4,8 @@ from openai import OpenAI
 from gtts import gTTS
 from dotenv import load_dotenv
 import os
+import edge_tts
+import asyncio
 
 load_dotenv()
 
@@ -51,8 +53,8 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     mode = user_preferences.get(user_id, "text")
     
     if mode == "voice":
-        tts = gTTS(text=reply, lang='en')
-        tts.save("voice.mp3")
+        communicate = edge_tts.Communicate(reply, "fa-IR-DilaraNeural")
+        await communicate.save("voice.mp3")
         with open("voice.mp3", "rb") as audio:
             await update.message.reply_voice(audio)
     else:
