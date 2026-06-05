@@ -51,7 +51,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     mode = user_preferences.get(user_id, "text")
     
     if mode == "voice":
-        tts = gTTS(text=reply, lang='fa')
+        tts = gTTS(text=reply, lang='en')
         tts.save("voice.mp3")
         with open("voice.mp3", "rb") as audio:
             await update.message.reply_voice(audio)
