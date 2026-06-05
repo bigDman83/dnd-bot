@@ -1,6 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from openai import OpenAI
+from gtts import gTTS
 from dotenv import load_dotenv
 import os
 
@@ -50,12 +51,8 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     mode = user_preferences.get(user_id, "text")
     
     if mode == "voice":
-        tts = client.audio.speech.create(
-            model="tts-1",
-            voice="onyx",
-            input=reply
-        )
-        tts.stream_to_file("voice.mp3")
+        tts = gTTS(text=reply, lang='fa')
+        tts.save("voice.mp3")
         with open("voice.mp3", "rb") as audio:
             await update.message.reply_voice(audio)
     else:
