@@ -2,6 +2,4 @@ python-telegram-bot
 openai
 python-dotenv
 requests
-gTTS
-asyncio
 edge_tts

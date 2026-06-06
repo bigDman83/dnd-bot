@@ -1,11 +1,9 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from openai import OpenAI
-from gtts import gTTS
 from dotenv import load_dotenv
 import os
 import edge_tts
-import asyncio
 
 load_dotenv()
 
