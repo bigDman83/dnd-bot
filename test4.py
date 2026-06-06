@@ -52,7 +52,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if mode == "voice":
         vowel_response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "متن فارسی زیر رو اعراب‌گذاری کن. فقط متن اعراب‌گذاری شده رو برگردون، هیچ توضیح اضافه‌ای نده."},
                 {"role": "user", "content": reply}
