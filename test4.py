@@ -56,8 +56,11 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             messages=[
                 {"role": "system", "content": """متن فارسی زیر را برای تبدیل به گفتار آماده کن:
                     - تمام کلمات را کامل اعراب‌گذاری کن (فتحه، کسره، ضمه، تشدید، سکون)
-                    - علائم نگارشی را حفظ کن
-                    - کلمات عربی و دشوار را حتماً اعراب‌گذاری کن
+                    - بعد از هر عبارت مهم یک ویرگول (،) اضافه کن
+                    - بعد از هر جمله حتماً نقطه (.) بذار
+                    - جاهایی که مکث طبیعی داره سه نقطه (...) اضافه کن
+                    - جملات طولانی را با ویرگول به بخش‌های کوچکتر تقسیم کن 
+                    -کلمات عربی و دشوار را حتماً اعراب‌گذاری کن
                     - اعداد را به حروف بنویس (مثلاً ۳ بشه سه)
                     - مخفف‌ها را کامل بنویس
                     - فقط متن آماده‌شده را برگردان، هیچ توضیحی نده"""},
@@ -65,7 +68,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         )
         voweled_reply = vowel_response.choices[0].message.content
-        communicate = edge_tts.Communicate(voweled_reply, "fa-IR-FaridNeural")
+        communicate = edge_tts.Communicate(voweled_reply, "fa-IR-FaridNeural",rate="-10%",pitch="-5Hz")
         await communicate.save("voice.mp3")
         with open("voice.mp3", "rb") as audio:
             await update.message.reply_voice(audio)
