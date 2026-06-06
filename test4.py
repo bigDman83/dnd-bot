@@ -54,12 +54,12 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         vowel_response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "متن فارسی زیر رو اعراب‌گذاری کن و آن را برای گرفتن ویس اماده کن. فقط متن اعراب‌گذاری شده رو برگردون و آن را برای گرفتن ویس اماده کن، هیچ توضیح اضافه‌ای نده."},
+                {"role": "system", "content": "متن فارسی زیر رو اعراب‌گذاری کن. فقط متن اعراب‌گذاری شده رو برگردون، هیچ توضیح اضافه‌ای نده."},
                 {"role": "user", "content": reply}
             ]
         )
         voweled_reply = vowel_response.choices[0].message.content
-        communicate = edge_tts.Communicate(voweled_reply, "fa-IR-DilaraNeural")
+        communicate = edge_tts.Communicate(voweled_reply, "fa-IR-FaridNeural")
         await communicate.save("voice.mp3")
         with open("voice.mp3", "rb") as audio:
             await update.message.reply_voice(audio)
