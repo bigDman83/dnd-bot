@@ -64,7 +64,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         with open("voice.mp3", "rb") as audio:
             await update.message.reply_voice(audio)
     else:
-        await update.message.reply_text(voweled_reply)
+        await update.message.reply_text(reply)
 
 app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
