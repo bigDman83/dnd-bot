@@ -54,7 +54,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         vowel_response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "متن فارسی زیر رو اعراب‌گذاری کن. فقط متن اعراب‌گذاری شده رو برگردون، هیچ توضیح اضافه‌ای نده."},
+                {"role": "system", "content": "متن فارسی زیر رو اعراب‌گذاری کن و آن را برای گرفتن ویس اماده کن. فقط متن اعراب‌گذاری شده رو برگردون و آن را برای گرفتن ویس اماده کن، هیچ توضیح اضافه‌ای نده."},
                 {"role": "user", "content": reply}
             ]
         )
