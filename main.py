@@ -165,7 +165,6 @@ conv_handler = ConversationHandler(
         CHOOSE_CLASS: [CallbackQueryHandler(choose_class, pattern="^class_")],
     },
     fallbacks=[CommandHandler("cancel", cancel)],
-    allow_reentry=True
 )
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
