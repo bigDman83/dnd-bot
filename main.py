@@ -153,6 +153,21 @@ async def get_ai_reply(text, user_id):
     )
     return response.choices[0].message.content
 
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("عملیات لغو شد.")
+    return ConversationHandler.END
+
+conv_handler = ConversationHandler(
+    entry_points=[CommandHandler("newchar", new_character)],
+    states={
+        CHOOSE_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, choose_name)],
+        CHOOSE_RACE: [CallbackQueryHandler(choose_race, pattern="^race_")],
+        CHOOSE_CLASS: [CallbackQueryHandler(choose_class, pattern="^class_")],
+    },
+    fallbacks=[CommandHandler("cancel", cancel)],
+    allow_reentry=True
+)
+
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     user_text = update.message.text
