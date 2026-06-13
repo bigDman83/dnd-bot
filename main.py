@@ -187,7 +187,8 @@ conv_handler = ConversationHandler(
         CHOOSE_RACE: [CallbackQueryHandler(choose_race, pattern="^race_")],
         CHOOSE_CLASS: [CallbackQueryHandler(choose_class, pattern="^class_")],
     },
-    fallbacks=[]
+    fallbacks=[],
+    per_message=True
 )
 
 app = ApplicationBuilder().token(TOKEN).build()
