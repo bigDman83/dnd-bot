@@ -1,0 +1,11 @@
+@"
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+.env
+*.log
+backup*.sql
+*.zip
+.vscode/
+"@ | Set-Content -Path "$dst\.gitignore" -Encoding utf8
