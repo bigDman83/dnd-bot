@@ -1,0 +1,1 @@
+ALTER TABLE `game_sessions` ADD `scene_message_id` integer;

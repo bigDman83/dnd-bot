@@ -1,0 +1,47 @@
+{
+  "name": "dnd-bot-cloudflare",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:generate": "drizzle-kit generate",
+    "db:apply:local": "wrangler d1 execute dnd-bot-db --local --file=./drizzle-migrations/0000_slippery_sister_grimm.sql",
+    "db:apply:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0000_slippery_sister_grimm.sql",
+    "db:apply:update:local": "wrangler d1 execute dnd-bot-db --local --file=./drizzle-migrations/0001_add_opening_scene_fields.sql",
+    "db:apply:update:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0001_add_opening_scene_fields.sql",
+    "db:apply:update2:local": "wrangler d1 execute dnd-bot-db --local --file=./drizzle-migrations/0002_add_lobby_message_id.sql",
+    "db:apply:update2:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0002_add_lobby_message_id.sql",
+    "db:apply:update3:local": "wrangler d1 execute dnd-bot-db --local --file=./drizzle-migrations/0003_add_prompt_message_id.sql",
+    "db:apply:update3:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0003_add_prompt_message_id.sql",
+    "db:apply:update4:local": "wrangler d1 execute dnd-bot-db --local --file=./drizzle-migrations/0004_add_paused_from.sql",
+    "db:apply:update4:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0004_add_paused_from.sql",
+    "db:apply:update5:local": "wrangler d1 execute dnd-bot-db --local --file=./drizzle-migrations/0005_add_scene_rounds.sql",
+    "db:apply:update5:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0005_add_scene_rounds.sql",
+    "db:apply:update6:local": "wrangler d1 execute dnd-bot-db --local --file=./drizzle-migrations/0006_add_scene_message_id.sql",
+    "db:apply:update6:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0006_add_scene_message_id.sql",
+    "db:apply:update7:local": "wrangler d1 execute dnd-bot-db --local --file=./drizzle-migrations/0007_add_locations.sql",
+    "db:apply:update7:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0007_add_locations.sql",
+    "db:apply:update8:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0008_add_creatures.sql",
+    "db:apply:update9:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0009_add_combat_ui_fields.sql",
+    "db:apply:update10:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0010_add_death_saves.sql",
+    "db:apply:update11:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0011_add_rest_fields.sql",
+    "db:apply:update12:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0012_add_round_hardening.sql",
+    "db:apply:update13:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0013_add_event_plans.sql",
+    "db:apply:update14:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0014_add_round_memory.sql",
+    "db:apply:update15:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0015_add_trace_ring.sql",
+    "db:apply:update16:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0016_add_character_xp.sql",
+    "db:apply:update17:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0017_add_character_tool_tags.sql",
+    "db:apply:update18:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0018_backfill_tool_tags.sql"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "sdk": "file:./local-packages/sdk",
+    "schema": "file:./local-packages/schema",
+    "lib": "file:./local-packages/lib"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0",
+    "drizzle-kit": "^0.31.0"
+  }
+}

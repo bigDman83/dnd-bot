@@ -1,0 +1,2 @@
+UPDATE characters SET equipment = json_insert(COALESCE(equipment, '[]'), '$[#]', 'طناب (Rope)', '$[#]', 'فندک (Tinderbox)') WHERE tool_tags IS NULL;
+UPDATE characters SET tool_tags = (SELECT json_group_array(value) FROM (SELECT 'rope' AS value UNION ALL SELECT 'tinderbox' UNION ALL SELECT 'thieves_tools' WHERE characters.class = 'rogue' UNION ALL SELECT 'spyglass' WHERE characters.background = 'criminal')) WHERE tool_tags IS NULL;

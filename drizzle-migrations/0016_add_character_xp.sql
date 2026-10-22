@@ -1,0 +1,1 @@
+ALTER TABLE `characters` ADD `xp` integer DEFAULT 0;

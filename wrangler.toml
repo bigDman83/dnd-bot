@@ -1,0 +1,13 @@
+name = "dnd-bot"
+main = "src/worker.js"
+compatibility_date = "2026-09-17"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dnd-bot-db"
+database_id = "6c26737a-bd35-49e4-819f-f39aede938b6" # بعد از «wrangler d1 create dnd-bot-db» با آیدی واقعی عوضش کن
+
+
+[observability]
+enabled = true

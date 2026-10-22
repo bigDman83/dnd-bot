@@ -1,0 +1,1 @@
+ALTER TABLE `party_members` ADD `prompt_message_id` integer;

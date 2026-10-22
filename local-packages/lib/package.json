@@ -1,0 +1,1 @@
+{ "name": "lib", "type": "module", "exports": { "./*": "./*.js" } }
