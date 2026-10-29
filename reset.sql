@@ -23,3 +23,4 @@ DROP TABLE IF EXISTS event_plans;
 DROP TABLE IF EXISTS applied_events;
 DROP TABLE IF EXISTS round_memory;
 DROP TABLE IF EXISTS trace_ring;
+DROP TABLE IF EXISTS xp_log;

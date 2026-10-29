@@ -333,6 +333,22 @@ export const appliedEvents = table("applied_events", {
     sql`(unixepoch())`,
   ),
 });
+
+// دفتر XP: هر XP کسب‌شده با منبع و دلیل (combat | skill_check | ...)؛ بازی‌ها پاکش نمی‌کنن
+export const xpLog = table("xp_log", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  chatId: integer("chat_id").notNull(),
+  round: integer("round").notNull(),
+  characterId: integer("character_id").notNull(),
+  amount: integer("amount").notNull(),
+  source: text("source").notNull(),
+  reason: text("reason").notNull(),
+  eventId: text("event_id").notNull(),
+  created: integer("created_at", { mode: "timestamp" }).default(
+    sql`(unixepoch())`,
+  ),
+});
+
 // حافظه‌ی دور (Round Memory): یک ردیف خلاصه در هر دور، کدمحور و بدون AI؛ داخل همان COMMIT نوشته میشه
 // هر عضو آرایه‌ها: { v: "group"|"private"|"hidden", t: "متن", owner?: tgId }؛ فقط ۱۰ دور آخر نگه داشته میشه
 export const roundMemory = table(

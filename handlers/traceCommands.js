@@ -5,6 +5,7 @@ import {
   eventPlans,
   sceneActions,
   roundMemory,
+  xpLog,
 } from "schema";
 import { eq, and, sql } from "sdk/db";
 import { debugUntilSeconds, setDebug, DEBUG_HOURS } from "lib/core/trace";
@@ -15,6 +16,9 @@ import {
   computeClock,
 } from "lib/game/events";
 import { checksToDiceText, TIME_MENU } from "lib/game/resolver";
+import { blockedToDiceText, skippedToDiceText } from "lib/game/blocked";
+import { finalDc } from "lib/core/actions";
+import { skillXpFor, xpToDiceText } from "lib/core/xp";
 import { restToDiceText } from "lib/world/rest";
 import { timeLine } from "lib/world/locations";
 import { buildMemoryRow } from "lib/game/memory";
@@ -129,6 +133,7 @@ const EVENT_TYPES = [
   "rest",
   "combat_result",
   "xp_award",
+  "skill_xp",
 ];
 const KIND_FA = {
   suggestion: "انتخاب پیشنهاد",
@@ -167,7 +172,7 @@ export function parseWhyArgs(args) {
 }
 
 const WHY_USAGE =
-  "فرمت درست:\n/why <شماره‌ی دور> — فهرست Eventهای آن دور\n/why <دور>:<نوع>:<اندیس> — مثلاً /why 7:skill_check:0\nنوع‌ها: scene، skill_check، travel، rest، combat_result، xp_award";
+  "فرمت درست:\n/why <شماره‌ی دور> — فهرست Eventهای آن دور\n/why <دور>:<نوع>:<اندیس> — مثلاً /why 7:skill_check:0\nنوع‌ها: scene، skill_check، travel، rest، combat_result، xp_award، skill_xp";
 
 function findCommitAttemptIndex(attempts, eventId) {
   for (let i = attempts.length - 1; i >= 0; i--) {
@@ -238,8 +243,10 @@ export function buildWhyLines(ctx) {
       step("اطلاعات این تاس توی Plan نیست (Plan پاک شده).");
     } else {
       const dc = decision?.checks;
+      // اول با actionId (بعد از V07)، وگرنه اگه تعداد برابر بود با اندیس
       const dcheck =
-        dc && dc.length === plan.checkResults.length ? dc[index] : null;
+        (dc && r.actionId ? dc.find((c) => c.actionId === r.actionId) : null) ||
+        (dc && dc.length === plan.checkResults.length ? dc[index] : null);
       step(
         `اقدام: ${r.name}` +
           (action
@@ -255,6 +262,30 @@ export function buildWhyLines(ctx) {
             : "") +
           (r.reason ? ` | دلیل: «${clip(r.reason, 100)}»` : ""),
       );
+      if (r.chain) {
+        step(
+          `زنجیره: مرحله ${r.chain.step} از ${r.chain.total} (${r.chain.id}${r.actionId ? `، ${r.actionId}` : ""})`,
+        );
+      } else if (r.actionId) {
+        step(`شناسهٔ اقدام: ${r.actionId}`);
+      }
+      if (r.groupId) step(`چک گروهی: ${r.groupId}`);
+      if (r.xp > 0)
+        step(
+          `XP: +${r.xp} (DC ${r.dc} و چک موفق) ← /why ${round}:skill_xp:${index}`,
+        );
+      const srcLabel = (x) =>
+        x.source === "help" ? `کمک ${x.by}` : `بدون ${x.tool}`;
+      if ((r.advSources || []).length || (r.disSources || []).length) {
+        const advTxt = (r.advSources || []).map(srcLabel).join("، ");
+        const disTxt = (r.disSources || []).map(srcLabel).join("، ");
+        step(
+          `برتری/ضعف: ${r.mode === "normal" || !r.mode ? "خنثی" : r.mode}` +
+            (advTxt ? ` | برتری: ${advTxt}` : "") +
+            (disTxt ? ` | ضعف: ${disTxt}` : "") +
+            (r.rolls?.length > 1 ? ` | تاس‌ها: ${r.rolls.join(" و ")}` : ""),
+        );
+      }
       const rs = findRollSpan(
         attempts,
         ci >= 0 ? ci : attempts.length - 1,
@@ -263,7 +294,7 @@ export function buildWhyLines(ctx) {
       const tag = rs ? ` [${rs.reasonCode || "-"} | ${rs.ruleSource}]` : "";
       step(
         `تاس${tag}: d20=${r.roll} ${signed(r.mod)}${r.ability ? ` (${r.ability})` : ""} ${signed(r.profBonus)} (مهارت)${fmtEnv(r.env)} = ${r.total} ` +
-          `در برابر ${r.opponentLabel ? `${r.opponentLabel} (تقابل)` : `DC ${r.dc}`} ← فاصله ${r.margin} ← ${r.degree}`,
+          `در برابر ${r.opponentLabel ? `${r.opponentLabel} (تقابل)` : `DC ${r.dc}${r.tierBonus ? ` (پایه ${r.dcBase} + مکان سطح بالا ${r.tierBonus})` : ""}`} ← فاصله ${r.margin} ← ${r.degree}`,
       );
       const out = memory?.outcomes?.[index]?.t;
       step(
@@ -301,14 +332,42 @@ export function buildWhyLines(ctx) {
       step("استراحت توی Plan نیست.");
     }
     clockLine();
-  } else if (type === "combat_result" || type === "xp_award") {
+  } else if (
+    type === "combat_result" ||
+    type === "xp_award" ||
+    type === "skill_xp"
+  ) {
+    const xr = ctx.xpRow;
+    if (type === "combat_result") {
+      step(
+        "پایان نبرد با پیروزی گروه؛ XP، بیدارشدن بیهوش‌ها و بیرون‌رفتن مرده‌ها در همین COMMIT اتمی اعمال شد.",
+      );
+    } else if (xr) {
+      step(
+        `XP: +${xr.amount} برای شخصیت شمارهٔ ${xr.characterId} | منبع: ${xr.source === "combat" ? "نبرد" : xr.source === "skill_check" ? "چک مهارت" : xr.source}`,
+      );
+      step(`دلیل: «${clip(xr.reason, 120)}»`);
+      if (type === "skill_xp") {
+        const cr = plan?.checkResults?.[index];
+        if (cr)
+          step(
+            `از چک ${cr.name} (${cr.skill}) | DC ${cr.dc} | فاصله ${cr.margin} ← جدول DC→XP (موقت؛ فقط DC ≥ 15 و چک موفق)`,
+          );
+        step(`چک مرتبط: ${round}:skill_check:${index}`);
+      } else {
+        step(
+          `سهم شخصیت شمارهٔ ${Number(index) + 1} از شرکت‌کننده‌های زنده (تقسیم مساوی).`,
+        );
+      }
+    } else {
+      step(
+        type === "skill_xp"
+          ? "ردیف دفتر XP پیدا نشد."
+          : `سهم XP شخصیت شمارهٔ ${Number(index) + 1} از شرکت‌کننده‌های زنده (تقسیم مساوی)؛ ردیف دفتر XP نبود (نبرد قبل از V07).`,
+      );
+    }
     step(
-      type === "combat_result"
-        ? "پایان نبرد با پیروزی گروه؛ XP، بیدارشدن بیهوش‌ها و بیرون‌رفتن مرده‌ها در همین COMMIT اتمی اعمال شد."
-        : `سهم XP شخصیت شمارهٔ ${Number(index) + 1} از شرکت‌کننده‌های زنده (تقسیم مساوی).`,
-    );
-    step(
-      "مقدار XP و دلیلش توی پیام پیروزی گروه آمده و جمعش توی ستون xp شخصیت است؛ نبرد هنوز trace ندارد.",
+      "جمع XP توی ستون xp شخصیت است؛ نبرد هنوز trace ندارد (چک مهارت trace دارد).",
     );
     return lines;
   } else {
@@ -438,11 +497,13 @@ async function handleWhy(chatId, args) {
 
   // اقدام بازیکن (فقط برای تاس): از تصمیم Resolver میشه فهمید کدوم بازیکن بوده
   let action = null;
-  if (
-    parsed.type === "skill_check" &&
-    plan?.decision?.checks?.length === plan?.checkResults?.length
-  ) {
-    const tgId = plan.decision.checks[parsed.index]?.tgId;
+  if (parsed.type === "skill_check" && plan?.checkResults?.[parsed.index]) {
+    const cr = plan.checkResults[parsed.index];
+    const dcs = plan.decision?.checks || [];
+    const dch =
+      (cr.actionId ? dcs.find((x) => x.actionId === cr.actionId) : null) ||
+      (dcs.length === plan.checkResults.length ? dcs[parsed.index] : null);
+    const tgId = dch?.tgId;
     if (tgId) {
       action = await db
         .select()
@@ -458,7 +519,17 @@ async function handleWhy(chatId, args) {
     }
   }
 
+  let xpRow = null;
+  if (parsed.type === "skill_xp" || parsed.type === "xp_award") {
+    xpRow = await db
+      .select()
+      .from(xpLog)
+      .where(eq(xpLog.eventId, eventId))
+      .get();
+  }
+
   const lines = buildWhyLines({
+    xpRow,
     eventId,
     type: parsed.type,
     index: parsed.index,
@@ -519,6 +590,9 @@ export function runReplay(ctx) {
   // ۱) هر تاس: جمع، DC، فاصله، درجه
   const aligned =
     dec && Array.isArray(dec.checks) && dec.checks.length === results.length;
+  // سطح مکان از span «context» همین تلاش (برای DC نهایی)
+  const ctxTier = (attempt?.spans || []).find((s) => s.step === "context")?.data
+    ?.tier;
   results.forEach((r, i) => {
     const label = `تاس ${i + 1} (${r.name}، ${r.skill})`;
     const envSum = (r.env || []).reduce((s, e) => s + e.delta, 0);
@@ -534,11 +608,21 @@ export function runReplay(ctx) {
         problems.push(`درجه: انتظار ${d}، ثبت‌شده ${r.degree.key}`);
     } else {
       against = `DC ${r.dc}`;
-      if (aligned) {
-        const expDc = DC_TABLE[dec.checks[i].difficulty];
+      // اول با actionId، وگرنه اگه تعداد برابر بود با اندیس
+      const dch =
+        (dec && r.actionId
+          ? (dec.checks || []).find((c) => c.actionId === r.actionId)
+          : null) || (aligned ? dec.checks[i] : null);
+      if (dch) {
+        // Plan قبل از V07 فیلد tierBonus ندارد ← بدون تعدیل Tier
+        let expDc;
+        if (r.tierBonus === undefined) expDc = DC_TABLE[dch.difficulty];
+        else if (Number.isFinite(Number(ctxTier)))
+          expDc = finalDc(dch.difficulty, ctxTier).dc;
+        else expDc = Math.min(30, DC_TABLE[dch.difficulty] + r.tierBonus);
         if (!same(expDc, r.dc))
           problems.push(
-            `DC از «${dec.checks[i].difficulty}»: انتظار ${expDc}، ثبت‌شده ${r.dc}`,
+            `DC از «${dch.difficulty}»: انتظار ${expDc}، ثبت‌شده ${r.dc}`,
           );
       }
       const expMargin = r.total - r.dc;
@@ -550,13 +634,44 @@ export function runReplay(ctx) {
     }
     if (problems.length === 0) {
       ok(
-        `${label}: ${r.roll}${signed(r.mod)}${signed(r.profBonus)}${envSum ? signed(envSum) : ""}=${r.total} در برابر ${against} ← ${r.degree.key}${aligned || r.opponentLabel ? "" : " (DC بدون تصمیم Resolver چک نشد)"}`,
+        `${label}: ${r.roll}${signed(r.mod)}${signed(r.profBonus)}${envSum ? signed(envSum) : ""}=${r.total} در برابر ${against} ← ${r.degree.key}${aligned || r.opponentLabel || r.actionId ? "" : " (DC بدون تصمیم Resolver چک نشد)"}`,
       );
     } else {
       for (const p of problems) diff(`${label} — ${p}`);
     }
   });
   if (results.length === 0) skip("این دور تاسی نداشت");
+
+  // ۱پ) XP چک مهارت: از DC و فاصله‌ی ثبت‌شده دوباره حساب میشه
+  for (const r of results) {
+    if (r.xp === undefined) continue; // Plan قبل از V07
+    const exp = skillXpFor({
+      dc: r.dc,
+      margin: r.margin,
+      opponentLabel: r.opponentLabel,
+    });
+    if (exp === r.xp)
+      ok(`XP ${r.name}: ${r.xp} (DC ${r.dc}، فاصله ${r.margin})`);
+    else diff(`XP ${r.name}: انتظار ${exp}، ثبت‌شده ${r.xp}`);
+  }
+
+  // ۱ب) زنجیره: هر مرحله‌ی تاس‌شده فقط وقتی مجازه که مرحله‌ی قبلش موفق بوده
+  for (const r of results) {
+    if (!r.chain || r.chain.step <= 1) continue;
+    const prev = results.find(
+      (x) => x.chain?.id === r.chain.id && x.chain.step === r.chain.step - 1,
+    );
+    const label = `زنجیره ${r.chain.id} مرحله ${r.chain.step} (${r.name})`;
+    if (!prev) {
+      // مرحله‌ی قبل ممکنه چک نبوده باشه (مثلاً بدون ریسک)؛ تفاوت حساب نمیشه
+      skip(`${label}: مرحله‌ی قبل چک نبود`);
+    } else if (prev.margin >= 0)
+      ok(`${label}: بعد از موفقیت مرحله‌ی قبل تاس شد`);
+    else
+      diff(
+        `${label}: مرحله‌ی قبل موفق نبود (فاصله ${prev.margin}) ولی این مرحله تاس شده`,
+      );
+  }
 
   // ۲) زمان دور از منوی بسته
   if (dec && dec.timeIndex !== undefined && dec.timeIndex !== null) {
@@ -611,7 +726,13 @@ export function runReplay(ctx) {
 
   // ۵) خط‌های تاس و استراحت داخل متن صحنه
   if (planRow.sceneText) {
-    const wanted = [checksToDiceText(results), restToDiceText(plan.restPlan)]
+    const wanted = [
+      checksToDiceText(results),
+      xpToDiceText(results),
+      blockedToDiceText(plan.blocked),
+      skippedToDiceText(plan.skipped),
+      restToDiceText(plan.restPlan),
+    ]
       .filter(Boolean)
       .join("\n")
       .split("\n")
@@ -636,6 +757,10 @@ export function runReplay(ctx) {
       checkResults: results,
       travel: null,
       restPlan: plan.restPlan,
+      blocked: plan.blocked || [],
+      skipped: plan.skipped || [],
+      autos: plan.autos || [],
+      helps: plan.helps || [],
     });
     const texts = (arr) => (Array.isArray(arr) ? arr : []).map((x) => x.t);
     const expOut = texts(rebuilt.outcomes);
