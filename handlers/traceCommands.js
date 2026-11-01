@@ -15,7 +15,12 @@ import {
   makeEventId,
   computeClock,
 } from "lib/game/events";
-import { checksToDiceText, TIME_MENU } from "lib/game/resolver";
+import {
+  checksToDiceText,
+  checksToDiceParts,
+  TIME_MENU,
+} from "lib/game/resolver";
+import { unpackScene, scenePlainView, escapeHtml } from "lib/game/blocks";
 import { blockedToDiceText, skippedToDiceText } from "lib/game/blocked";
 import { finalDc } from "lib/core/actions";
 import { skillXpFor, xpToDiceText } from "lib/core/xp";
@@ -695,7 +700,7 @@ export function runReplay(ctx) {
     if (same(c.elapsed, clock.after))
       ok(`ساعت جهان: ${clock.before} ← ${c.elapsed}`);
     else diff(`ساعت جهان — انتظار ${c.elapsed}، ثبت‌شده ${clock.after}`);
-    const firstLine = (planRow.sceneText || "").split("\n")[0];
+    const firstLine = scenePlainView(planRow.sceneText || "").split("\n")[0];
     if (planRow.sceneText) {
       const tl = timeLine(clock.after);
       if (same(tl, firstLine)) ok(`خط زمان صحنه: ${tl}`);
@@ -726,17 +731,34 @@ export function runReplay(ctx) {
 
   // ۵) خط‌های تاس و استراحت داخل متن صحنه
   if (planRow.sceneText) {
-    const wanted = [
-      checksToDiceText(results),
-      xpToDiceText(results),
-      blockedToDiceText(plan.blocked),
-      skippedToDiceText(plan.skipped),
-      restToDiceText(plan.restPlan),
-    ]
-      .filter(Boolean)
-      .join("\n")
-      .split("\n")
-      .filter(Boolean);
+    // صحنه‌ی V08 به شکل HTML ذخیره شده (خط ساده + جزئیات؛ همه escape‌شده)؛ صحنه‌ی قدیمی متن ساده است
+    const isHtmlScene = unpackScene(planRow.sceneText).html;
+    const diceParts = checksToDiceParts(results);
+    const wanted = isHtmlScene
+      ? [
+          ...diceParts.lines,
+          ...diceParts.details,
+          xpToDiceText(results),
+          blockedToDiceText(plan.blocked),
+          skippedToDiceText(plan.skipped),
+          restToDiceText(plan.restPlan),
+        ]
+          .filter(Boolean)
+          .join("\n")
+          .split("\n")
+          .filter(Boolean)
+          .map(escapeHtml)
+      : [
+          checksToDiceText(results),
+          xpToDiceText(results),
+          blockedToDiceText(plan.blocked),
+          skippedToDiceText(plan.skipped),
+          restToDiceText(plan.restPlan),
+        ]
+          .filter(Boolean)
+          .join("\n")
+          .split("\n")
+          .filter(Boolean);
     const missing = wanted.filter((l) => !planRow.sceneText.includes(l));
     if (wanted.length === 0) skip("متن صحنه: خط تاس/استراحتی نبود");
     else if (missing.length === 0)
