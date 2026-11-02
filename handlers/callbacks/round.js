@@ -49,6 +49,20 @@ export async function onSuggestionSkip(ctx) {
   if (result.ok) await updateRoundStatus(chatId);
 }
 
+// «✍️ خودم می‌نویسم»: فقط راهنمایی؛ اقدام با پیام متنی در گروه ثبت میشه
+export async function onSuggestionWrite(ctx) {
+  const { data, chatId } = ctx;
+  const round = parseInt(data.split("_")[2], 10);
+  const session = await getSession(chatId);
+  if (await rejectStaleRound(ctx, session, round, "این دکمه مال دور قبلیه")) {
+    return;
+  }
+  await toast(
+    ctx,
+    "✍️ اقدامت رو توی گروه بنویس: [اکشن] و (دیالوگ)؛ مثلاً [به در نزدیک می‌شم]",
+  );
+}
+
 // ادمین دور رو تأیید می‌کنه → روایت مشترک ساخته میشه
 export async function onRoundGo(ctx) {
   const { data, chatId, from } = ctx;

@@ -8,6 +8,7 @@ import {
 import {
   onSuggestion,
   onSuggestionSkip,
+  onSuggestionWrite,
   onRoundGo,
   onRoundUnlock,
 } from "./callbacks/round.js";
@@ -19,8 +20,15 @@ const ROUTES = [
   // لابی
   [(d) => d.startsWith("sp_expected_"), onExpectedPlayers],
   // دور
-  [(d) => d.startsWith("sug_") && !d.startsWith("sug_skip"), onSuggestion],
+  [
+    (d) =>
+      d.startsWith("sug_") &&
+      !d.startsWith("sug_skip") &&
+      !d.startsWith("sug_write"),
+    onSuggestion,
+  ],
   [(d) => d.startsWith("sug_skip"), onSuggestionSkip],
+  [(d) => d.startsWith("sug_write"), onSuggestionWrite],
   [(d) => d.startsWith("round_go_"), onRoundGo],
   // نبرد
   [(d) => d.startsWith("round_unlock_"), onRoundUnlock],
