@@ -123,6 +123,78 @@ assert.deepEqual(
 );
 ok("نام بازیکن: غلط املایی، غایب و نام با پسوند");
 
+// ۴ب) نام چندکلمه‌ای: دور ۱ تا ۵ بازی زنده («هوشنگ امیر ابتهاج») با نام کوچک رد می‌شد
+const long = { ...base, playerNames: ["هوشنگ امیر ابتهاج", "مانار"] };
+assert.deepEqual(
+  codes(validateNarration({ ...long, narration: "هوشنگ به سمت مانار رفت." })),
+  [],
+);
+assert.deepEqual(
+  codes(
+    validateNarration({
+      ...long,
+      narration: "هوشنگ امیر ابتهاج و مانار رفتند.",
+    }),
+  ),
+  [],
+);
+assert.deepEqual(
+  codes(validateNarration({ ...long, narration: "ابتهاج و مانار رفتند." })),
+  [],
+);
+assert.deepEqual(
+  codes(validateNarration({ ...long, narration: "هوشنگی و مانار رفتند." })),
+  [],
+); // پسوند کوتاه
+assert.deepEqual(
+  codes(validateNarration({ ...long, narration: "هوشنگ رفت." })),
+  ["PLAYER_NAME_MISSING"],
+);
+assert.deepEqual(
+  codes(validateNarration({ ...long, narration: "هوشنک و مانار رفتند." })),
+  ["PLAYER_NAME_TYPO"],
+);
+assert.deepEqual(
+  codes(
+    validateNarration({
+      ...long,
+      narration: "هوشنگ و مانار ایستادند.\nهوشنگ: «برویم»",
+    }),
+  ),
+  ["NPC_ONLY"],
+);
+assert.deepEqual(
+  codes(
+    validateNarration({
+      ...long,
+      narration: "هوشنگ و مانار ایستادند.\nنگهبان: «برویم»",
+    }),
+  ),
+  [],
+);
+ok(
+  "نام چندکلمه‌ای: نام کوچک کافی است؛ غلط املایی و دیالوگ برای بازیکن هنوز گرفته می‌شود",
+);
+
+// ۴پ) تلاش دوم (lenient): نبودن نام فقط هشدار؛ غلط‌بودنش هنوز خطا
+r = validateNarration({ ...base, narration: "دانی رفت.", lenient: true });
+assert.deepEqual(codes(r), []);
+assert.deepEqual(
+  r.warnings.map((w) => w.code),
+  ["PLAYER_NAME_MISSING"],
+);
+assert.deepEqual(
+  codes(
+    validateNarration({
+      ...base,
+      narration: "دانی و مانور رفتند.",
+      lenient: true,
+    }),
+  ),
+  ["PLAYER_NAME_TYPO"],
+);
+ok("lenient: نام غایب هشدار، غلط املایی همچنان خطا");
+
 // ۵) طول با تلرانس ۲۵٪ (explore ۱۲۰ ← ۱۵۰)
 const words = (k) => Array.from({ length: k }, (_, i) => `کلمه${i}`).join(" ");
 assert.deepEqual(
@@ -271,3 +343,24 @@ assert.deepEqual(
 );
 assert.equal(normalizeFa("مَانار‌ي"), "مانار ی");
 ok("ورودی خالی/null و نرمال‌سازی");
+
+// ۱۱) سقف دیالوگ: فقط هشدار
+const dl = (k) =>
+  Array.from({ length: k }, (_, i) => `نگهبان${i}: «سلام»`).join("\n");
+r = validateNarration({
+  ...base,
+  narration: `مانار و دانی ایستادند.\n${dl(5)}`,
+});
+assert.deepEqual(codes(r), []);
+assert.ok(r.warnings.some((w) => w.code === "DIALOGUE_LONG"));
+r = validateNarration({
+  ...base,
+  narration: `مانار و دانی ایستادند.\nنگهبان: «${words(40)}»`,
+});
+assert.ok(r.warnings.some((w) => w.code === "DIALOGUE_LONG"));
+r = validateNarration({
+  ...base,
+  narration: `مانار و دانی ایستادند.\n${dl(4)}`,
+});
+assert.ok(!r.warnings.some((w) => w.code === "DIALOGUE_LONG"));
+ok("دیالوگ بیش از ۴ خط یا بیش از ~۲۵ کلمه فقط هشدار؛ تا ۴ خط بی‌اشکال");

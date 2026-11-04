@@ -22,7 +22,12 @@ ok("خروجی کامل: trim، حداکثر ۳ پیشنهاد، newNames");
 
 // ۲) بدون newNames / پیشنهاد
 const bare = readNarratorOutput({ narration: "روایت" });
-assert.deepEqual(bare, { narration: "روایت", suggestions: [], newNames: [] });
+assert.deepEqual(bare, {
+  narration: "روایت",
+  layoutScript: "روایت",
+  suggestions: [],
+  newNames: [],
+});
 ok("newNames و suggestions اختیاری‌اند (سازگار با خروجی قدیمی راوی)");
 
 // ۳) روایت خالی یا نادرست = خطا (دور سالم برمی‌گردد)
