@@ -69,7 +69,7 @@ const HELP_TEXT =
   "/help — همین راهنما";
 
 // 👇 شناسه‌ی عددی تلگرام خودت (نه یوزرنیم!). از @userinfobot بگیرش و اینجا جایگزین کن.
-const OWNER_TG_ID = 991437499; // TODO: قبل از دیپلوی این رو با آیدی عددی خودت پر کن
+const OWNER_TG_ID = <id>; // TODO: قبل از دیپلوی این رو با آیدی عددی خودت پر کن
 
 export default async function (message, options = {}) {
   const chatId = message.chat.id;
