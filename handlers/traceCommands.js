@@ -25,7 +25,7 @@ import { blockedToDiceText, skippedToDiceText } from "lib/game/blocked";
 import { finalDc } from "lib/core/actions";
 import { skillXpFor, xpToDiceText } from "lib/core/xp";
 import { restToDiceText } from "lib/world/rest";
-import { timeLine } from "lib/world/locations";
+import { timeLine, ENVIRONMENT_LABELS } from "lib/world/locations";
 import { buildMemoryRow } from "lib/game/memory";
 import { DC_TABLE } from "lib/core/dndData";
 import { degreeFor } from "lib/core/degrees";
@@ -314,6 +314,18 @@ export function buildWhyLines(ctx) {
     if (tr?.traveled) {
       step(
         `مقصد: «${tr.location?.name}» (سطح ${tr.location?.tier}) | ${tr.distanceLabel} (${tr.hours} ساعت منوی سفر؛ ساعت جهان به مضرب ۶ گرد میشه)`,
+      );
+      // پروفایل مقصد (V09؛ فقط برای صاحب بات، DM-Only)
+      const loc = tr.location || {};
+      const envs =
+        (loc.environments || [])
+          .map((k) => ENVIRONMENT_LABELS[k] || k)
+          .join("، ") || "—";
+      const pop = loc.population
+        ? `${loc.population.count} نفر (پلهٔ ${loc.population.step}، تخمین در ساعت ${loc.population.hours})`
+        : "بدون تخمین";
+      step(
+        `پروفایل مقصد: خصومت=${loc.hostility ?? "none"} | محیط: ${envs} | جمعیت: ${pop}`,
       );
     } else {
       step("سفر توی Plan نیست.");

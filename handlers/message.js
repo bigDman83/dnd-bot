@@ -1,4 +1,4 @@
-import { api, db } from "sdk";
+import { api, db, getOwnerTgId } from "sdk";
 import {
   users,
   gameSessions,
@@ -68,9 +68,8 @@ const HELP_TEXT =
   "/sheet — دیدن کامل شخصیت(های) خودت، هر وقت بخوای\n" +
   "/help — همین راهنما";
 
-// 👇 شناسه‌ی عددی تلگرام خودت (نه یوزرنیم!). از @userinfobot بگیرش و اینجا جایگزین کن.
-const OWNER_TG_ID = <id>; // TODO: قبل از دیپلوی این رو با آیدی عددی خودت پر کن
-
+// شناسه‌ی عددی صاحب بات از secret به اسم OWNER_TG_ID می‌آد (نه از کد)؛ با getOwnerTgId() خونده میشه.
+// تنظیمش: npx wrangler secret put OWNER_TG_ID  (اگه تنظیم نباشه، دستورهای صاحب بات خاموش می‌مونن)
 export default async function (message, options = {}) {
   const chatId = message.chat.id;
   const from = message.from;
@@ -111,7 +110,7 @@ export default async function (message, options = {}) {
   // ۰) دستور مخفی صاحب بات: ذخیره‌ی کلید API در دیتابیس (تنها راه ممکن، چون پلتفرم secrets vault نداره)
   if (
     message.chat.type === "private" &&
-    from.id === OWNER_TG_ID &&
+    from.id === getOwnerTgId() &&
     text.startsWith("/setkey ")
   ) {
     const parts = text.split(" ");
@@ -151,7 +150,7 @@ export default async function (message, options = {}) {
   // ۰.۴) ردگیری و debug (V05): فقط صاحب بات و فقط چت خصوصی؛ بقیه چیزی نمی‌بینن
   if (
     message.chat.type === "private" &&
-    from.id === OWNER_TG_ID &&
+    from.id === getOwnerTgId() &&
     (await handleTraceCommand(chatId, text))
   ) {
     return;

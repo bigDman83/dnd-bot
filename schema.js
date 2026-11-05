@@ -211,6 +211,10 @@ export const locations = table("locations", {
   tier: integer("tier").notNull().default(1), // سطح خطر ۱ تا ۴
   theme: text("theme"),
   rules: json("rules"), // برچسب‌ها مثل ["darkness"] از فهرست بسته‌ی RULE_TAGS
+  hostility: text("hostility").notNull().default("none"), // none | low | moderate | high (DM-Only)
+  environments: json("environments"), // حداکثر ۴ مقدار از فهرست بسته‌ی ENVIRONMENTS
+  population: json("population"), // Population Snapshot؛ null = مکان قدیمی بدون تخمین
+  residue: json("residue"), // حداکثر ۳ خط ته‌مانده‌ی NPCهای حذف‌شده
   created: integer("created_at", { mode: "timestamp" }).default(
     sql`(unixepoch())`,
   ),

@@ -1,4 +1,3 @@
-@"
 node_modules/
 dist/
 .wrangler/
@@ -8,4 +7,3 @@ dist/
 backup*.sql
 *.zip
 .vscode/
-"@ | Set-Content -Path "$dst\.gitignore" -Encoding utf8

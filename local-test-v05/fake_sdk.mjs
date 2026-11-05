@@ -2,7 +2,8 @@ const raw = {};
 export const tables = new Proxy(raw, { get: (o, k) => (o[k] ||= []), set: (o, k, v) => ((o[k] = v), true) });
 export const sent = [];
 export const api = { sendMessage: async (p) => sent.push(p) };
-export const fetch = async () => { throw new Error("fetch not available in test"); };
+export const getOwnerTgId = () => globalThis.__ownerId ?? null;
+export const fetch = async (...a) => { if (globalThis.__fakeFetch) return globalThis.__fakeFetch(...a); throw new Error("fetch not available in test"); };
 export let failWrites = false; export const setFail = (v) => (failWrites = v);
 const clone = (x) => JSON.parse(JSON.stringify(x));
 let seq = 0;
@@ -17,7 +18,7 @@ export const db = {
   }) }),
   insert: (t) => ({ values: (v) => {
     const ins = () => { if (failWrites && t.__t === "trace_ring") throw new Error("boom"); tables[t.__t].push(stamp(t, clone(v))); };
-    return { run: async () => ins(), onConflictDoUpdate: ({ target, set }) => ({ run: async () => {
+    return { run: async () => ins(), returning: () => ({ get: async () => { ins(); const r = tables[t.__t].at(-1); if (r.id == null) r.id = tables[t.__t].length; return clone(r); } }), onConflictDoUpdate: ({ target, set }) => ({ run: async () => {
       const row = tables[t.__t].find((r) => r[target.name] === v[target.name]);
       if (row) Object.assign(row, set); else ins(); } }) };
   } }),
