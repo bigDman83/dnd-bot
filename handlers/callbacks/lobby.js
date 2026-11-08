@@ -213,6 +213,18 @@ export async function onPickCharacter(ctx) {
     await toast(ctx, "این شخصیت مرده! یکی دیگه انتخاب کن یا شخصیت جدید بساز");
     return;
   }
+  // شخصیت تازه وارد بازی می‌شود: جان کامل و بدون وضعیت بیهوشی/مرگ
+  await db
+    .update(characters)
+    .set({
+      hp: chosen.maxHp,
+      stable: 0,
+      deathSaveSuccesses: 0,
+      deathSaveFailures: 0,
+      hitDiceSpent: 0,
+    })
+    .where(eq(characters.id, characterId))
+    .run();
   await db
     .update(partyMembers)
     .set({ characterId, promptMessageId: null })

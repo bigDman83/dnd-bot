@@ -68,6 +68,7 @@ export const gameSessions = table("game_sessions", {
   sceneMessageId: integer("scene_message_id"),
   currentLocationId: integer("current_location_id"),
   resolvingSince: integer("resolving_since"), // ثانیهٔ یونیکسِ گرفتن قفل resolving؛ برای تشخیص قفل گیرکرده
+  lastEncounterEnd: json("last_encounter_end"), // {round, worldHour} پایان آخرین Encounter؛ برای Cooldown
   updated: integer("updated_at", { mode: "timestamp" }).default(
     sql`(unixepoch())`,
   ),
@@ -215,6 +216,7 @@ export const locations = table("locations", {
   environments: json("environments"), // حداکثر ۴ مقدار از فهرست بسته‌ی ENVIRONMENTS
   population: json("population"), // Population Snapshot؛ null = مکان قدیمی بدون تخمین
   residue: json("residue"), // حداکثر ۳ خط ته‌مانده‌ی NPCهای حذف‌شده
+  hostileSnapshot: json("hostile_snapshot"), // Hostile Snapshot دشمنان مکان؛ null = Unrolled (DM-Only)
   created: integer("created_at", { mode: "timestamp" }).default(
     sql`(unixepoch())`,
   ),

@@ -27,6 +27,11 @@ import { skillXpFor, xpToDiceText } from "lib/core/xp";
 import { restToDiceText } from "lib/world/rest";
 import { timeLine, ENVIRONMENT_LABELS } from "lib/world/locations";
 import { buildMemoryRow } from "lib/game/memory";
+import {
+  gateWhyLines,
+  noticeWhyLines,
+  replayEncounterItems,
+} from "lib/combat/encounter";
 import { DC_TABLE } from "lib/core/dndData";
 import { degreeFor } from "lib/core/degrees";
 
@@ -327,6 +332,7 @@ export function buildWhyLines(ctx) {
       step(
         `پروفایل مقصد: خصومت=${loc.hostility ?? "none"} | محیط: ${envs} | جمعیت: ${pop}`,
       );
+      for (const l of gateWhyLines(plan?.encounter)) step(l);
     } else {
       step("سفر توی Plan نیست.");
     }
@@ -403,6 +409,7 @@ export function buildWhyLines(ctx) {
         `روایت: ${s.data.provider} ${s.data.ok ? "موفق" : "شکست"}${s.reasonCode ? ` [${s.reasonCode}]` : ""} ${s.data.ms ?? "?"}ms`,
       );
     }
+    for (const l of noticeWhyLines(plan?.notice)) step(l);
     clockLine();
     const ids = spansOf(att, "commit")[0]?.refs?.eventIds;
     if (ids)
@@ -721,6 +728,9 @@ export function runReplay(ctx) {
   } else {
     skip("ساعت جهان: span ساعت توی trace این تلاش نیست");
   }
+
+  // ۳ب) Roll Gate و تاس توجه دشمن (V10)
+  for (const it of replayEncounterItems(plan)) items.push(it);
 
   // ۴) Eventها
   if (planRow.status === "committed") {

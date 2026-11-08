@@ -34,7 +34,8 @@
     "db:apply:update17:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0017_add_character_tool_tags.sql",
     "db:apply:update18:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0018_backfill_tool_tags.sql",
     "db:apply:update19:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0019_add_xp_log.sql",
-    "db:apply:update20:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0020_add_location_profile.sql"
+    "db:apply:update20:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0020_add_location_profile.sql",
+    "db:apply:update21:remote": "wrangler d1 execute dnd-bot-db --remote --file=./drizzle-migrations/0021_add_encounter_state.sql"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
